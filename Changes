@@ -1,5 +1,9 @@
 Revision history for Perl extension Class::Trigger.
 
+0.06  Wed Oct 23 19:13:20 JST 2002
+	* Fixed bug that trigger disappears when trigger sub modifies $_.
+	  (Thanks to Tony Bowden and Barry Hoggard)
+
 0.05  Tue Apr 30 14:06:06 JST 2002
 	- Example tweak
 	- remove untie() lines to shut up bleadperl

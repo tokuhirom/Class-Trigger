@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = 0.05;
+$VERSION = 0.06;
 
 use Class::Data::Inheritable;
 use Carp ();
@@ -48,7 +48,9 @@ sub call_trigger {
     __validate_triggerpoint(ref $self, $when);
     my $all_triggers = __fetch_triggers($self);
     my $triggers = $all_triggers->{$when} || [];
-    $_->($self) for @{$triggers};
+    for my $trigger (@{$triggers}) {
+	$trigger->($self);
+    }
 }
 
 sub __validate_triggerpoint {
