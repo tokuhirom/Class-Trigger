@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 use Class::Data::Inheritable;
 use Carp ();
@@ -180,6 +180,72 @@ C<import>.
   package main;
   Foo->add_trigger(foo  => \&sub1); # okay
   Foo->add_trigger(hoge => \&sub2); # exception
+
+=head1 FAQ
+
+B<Acknowledgement:> Thanks to everyone at POOP mailing-list
+(http://poop.sourceforge.net/).
+
+=over 4
+
+=item Q.
+
+This module lets me add subs to be run before/after a specific
+subroutine is run.  Yes?
+
+=item A.
+
+You put various call_trigger() method in your class.  Then your class
+users can call add_trigger() method to add subs to be run in points
+just you specify (exactly where you put call_trigger()).
+
+=item Q.
+
+Are you aware of the perl-aspects project and the Aspect module?  Very
+similar to Class::Trigger by the look of it, but its not nearly as
+explicit.  Its not necessary for foo() to actually say "triggers go
+*here*", you just add them.
+
+=item A.
+
+Yep ;)
+
+But the difference with Aspect would be that Class::Trigger is so
+simple that it's easy to learn, and doesn't require 5.6 or over.
+
+=item Q.
+
+How does this compare to Sub::Versive, or Hook::LexWrap?
+
+=item A.
+
+Very similar. But the difference with Class::Trigger would be the
+explicitness of trigger points.
+
+In addition, you can put hooks in any point, rather than pre or post
+of a method.
+
+=item Q.
+
+It looks interesting, but I just can't think of a practical example of
+its use...
+
+=item A.
+
+(by Tony Bowden)
+
+I originally added code like this to Class::DBI to cope with one
+particular case: auto-upkeep of full-text search indices.
+
+So I added functionality in Class::DBI to be able to trigger an
+arbitary subroutine every time something happened - then it was a
+simple matter of setting up triggers on INSERT and UPDATE to reindex
+that row, and on DELETE to remove that index row.
+
+See L<Class::DBI::mysql::FullTextSearch> and its source code to see it
+in action.
+
+=back
 
 =head1 AUTHOR
 
