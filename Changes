@@ -1,0 +1,14 @@
+Revision history for Perl extension Class::Trigger.
+
+0.03  Tue Dec 25 03:30:31 JST 2001
+	- renamed to Class::Trigger from Class::Hookable
+	* Added object based triggers
+	- fixed bug that subclass shares arrayref of triggers with parent
+
+0.02  Tue Dec 25 02:18:27 JST 2001
+	- removed evil eval() to inherit Class::Data::Inheritable
+	- makes copy of trigger table in add_trigger() for inheritance
+	  (Thanks to Tony Bowden <tony@kasei.com>)
+
+0.01  Mon Dec 24 11:47:13 2001
+	- original version; created by h2xs 1.19

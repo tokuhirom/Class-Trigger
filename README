@@ -1,0 +1,88 @@
+NAME
+    Class::Trigger - Mixin to add / call inheritable triggers
+
+SYNOPSIS
+      package Foo;
+      use Class::Trigger;
+
+      sub foo {
+          my $self = shift;
+          $self->call_trigger('before_foo');
+          $self->do_foo;
+          $self->call_trigger('after_foo');
+      }
+
+      package main;
+      Foo->add_trigger(before_foo => \&sub1);
+      Foo->add_trigger(after_foo => \&sub2);
+
+      my $foo = Foo->new;
+      $foo->foo;                    # then sub1, sub2 called
+
+      # triggers are inheritable
+      package Bar;
+      use base qw(Foo);
+
+      Bar->add_trigger(before_foo => \&sub);
+
+      # triggers can be object based
+      $foo->add_hook(after_foo => \&sub3);
+      $foo->foo;                    # sub3 would appply only to this object
+
+DESCRIPTION
+    Class::Trigger is a mixin class to add / call triggers (or hooks) that
+    get called at some points you specify.
+
+METHODS
+    By using this module, your class is capable of following two methods.
+
+    add_trigger
+          Foo->add_trigger($triggerpoint => $sub);
+          $foo->add_trigger($triggerpoint => $sub);
+
+        Adds triggers for trigger point. You can have any number of triggers
+        for each point. Each coderef will be passed a copy of the object,
+        and return values will be ignored.
+
+        If "add_trigger" is called as object method, whole trigger table
+        will be copied onto the object. Then the object should be
+        implemented as hash.
+
+          my $foo = Foo->new;
+
+          # this trigger ($sub_foo) would apply only to $foo object
+          $foo->add_trigger($triggerpoint => $sub_foo);
+          $foo->foo;
+
+          # And not to another $bar object
+          my $bar = Foo->new;
+          $bar->foo;
+
+    call_trigger
+          $foo->call_trigger($triggerpoint);
+
+        Calls triggers for trigger point, which were added via "add_trigger"
+        method. Each triggers will be passed a copy of the object.
+
+TRIGGER POINTS
+    By default you can make any number of trigger points, but if you want to
+    declare names of trigger points explicitly, you can do it via "import".
+
+      package Foo;
+      use Class::Trigger qw(foo bar baz);
+
+      package main;
+      Foo->add_trigger(foo  => \&sub1); # okay
+      Foo->add_trigger(hoge => \&sub2); # exception
+
+AUTHOR
+    Original idea by Tony Bowden <tony@kasei.com> in Class::DBI.
+
+    Code by Tatsuhiko Miyagawa <miyagawa@bulknews.net>.
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
+SEE ALSO
+    the Class::Data::Inheritable manpage
+
