@@ -9,6 +9,8 @@ t/02_valid.t
 t/03_inherit.t
 t/04_object.t
 t/05_args.t
+t/06_coverage.t
 t/lib/Foo.pm
 t/lib/Foo/Bar.pm
 t/lib/Foo/Valid.pm
+META.yml                                 Module meta-data (added by MakeMaker)

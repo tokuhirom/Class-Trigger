@@ -1,5 +1,9 @@
 Revision history for Perl extension Class::Trigger.
 
+0.09  Fri Feb 18 14:13:22 JST 2005
+	- Devel::Cover compliant code. Now 100% coverage.
+	  (Thanks to Leif Eriksen and Phalanx folks)
+
 0.08  Thu Feb 27 15:51:31 JST 2003
 	- Performance boostup and document clarification
 	  (Thanks to Tim Bunce)

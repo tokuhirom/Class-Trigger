@@ -1,5 +1,5 @@
 use strict;
-use Test::More tests => 7;
+use Test::More qw(no_plan);
 
 use IO::Scalar;
 
@@ -38,3 +38,18 @@ ok(Foo->add_trigger(after_foo  => sub { print ref $_[0] }),
     is $out, "before_foo\nfoo\nafter_foo\nafter_foo2\nFoo", 'class name';
 }
 
+# coverage tests
+
+{
+    # pass a non-code ref and catch the carp
+
+    my @die;
+
+    eval {
+	local $SIG{__DIE__} = sub {push @die, @_};
+
+	Foo->add_trigger(wrong_type => []);
+    };
+
+    like(pop(@die), qr(add_trigger[(][)] needs coderef at ), 'check for right callback param');
+}

@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = 0.08;
+$VERSION = 0.09;
 
 use Class::Data::Inheritable;
 use Carp ();
@@ -44,7 +44,7 @@ sub add_trigger {
 
 sub call_trigger {
     my $self = shift;
-    my $all_triggers = __fetch_triggers($self) || return; # any triggers?
+    return unless my $all_triggers = __fetch_triggers($self); # any triggers?
     my $when = shift;
     if (my $triggers = $all_triggers->{$when}) {
 	for my $trigger (@$triggers) {
@@ -60,9 +60,9 @@ sub call_trigger {
 }
 
 sub __validate_triggerpoint {
-    my $points = $_[0]->__triggerpoints || return;
+    return unless my $points = $_[0]->__triggerpoints;
     my ($self, $when) = @_;
-    Carp::croak("$when is not valid triggerpoint for ".(ref($self) || $self))
+    Carp::croak("$when is not valid triggerpoint for ".(ref($self) ? ref($self) : $self))
 	unless $points->{$when};
 }
 
