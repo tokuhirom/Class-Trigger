@@ -1,5 +1,12 @@
 Revision history for Perl extension Class::Trigger.
 
+0.07  Sat Feb 15 01:01:36 JST 2003
+	- s/add_hook/add_trigger/ in pod.
+	  (Thanks to Tony Bowden)
+	* now you can pass @args to call_trigger
+	- Class->call_trigger() works
+	  (Thanks to Tim Bunce)
+
 0.06  Wed Oct 23 19:13:20 JST 2002
 	* Fixed bug that trigger disappears when trigger sub modifies $_.
 	  (Thanks to Tony Bowden and Barry Hoggard)

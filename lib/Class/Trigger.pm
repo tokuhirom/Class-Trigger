@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = 0.06;
+$VERSION = 0.07;
 
 use Class::Data::Inheritable;
 use Carp ();
@@ -44,12 +44,12 @@ sub add_trigger {
 }
 
 sub call_trigger {
-    my($self, $when) = @_;
-    __validate_triggerpoint(ref $self, $when);
+    my($self, $when, @args) = @_;
+    __validate_triggerpoint(ref($self) || $self, $when);
     my $all_triggers = __fetch_triggers($self);
     my $triggers = $all_triggers->{$when} || [];
     for my $trigger (@{$triggers}) {
-	$trigger->($self);
+	$trigger->($self, @args);
     }
 }
 
@@ -126,7 +126,7 @@ Class::Trigger - Mixin to add / call inheritable triggers
   Bar->add_trigger(before_foo => \&sub);
 
   # triggers can be object based
-  $foo->add_hook(after_foo => \&sub3);
+  $foo->add_trigger(after_foo => \&sub3);
   $foo->foo;			# sub3 would appply only to this object
 
 =head1 DESCRIPTION
