@@ -1,5 +1,9 @@
 Revision history for Perl extension Class::Trigger.
 
+0.08  Thu Feb 27 15:51:31 JST 2003
+	- Performance boostup and document clarification
+	  (Thanks to Tim Bunce)
+
 0.07  Sat Feb 15 01:01:36 JST 2003
 	- s/add_hook/add_trigger/ in pod.
 	  (Thanks to Tony Bowden)

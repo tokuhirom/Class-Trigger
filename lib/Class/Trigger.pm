@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = 0.07;
+$VERSION = 0.08;
 
 use Class::Data::Inheritable;
 use Carp ();
@@ -32,42 +32,44 @@ sub add_trigger {
     my $proto = shift;
 
     # should be deep copy of the hash: for inheritance
-    my %triggers = __deep_dereference(__fetch_triggers($proto));
+    my $old_triggers = __fetch_triggers($proto) || {};
+    my %triggers = __deep_dereference($old_triggers);
     while (my($when, $code) = splice @_, 0, 2) {
 	__validate_triggerpoint($proto, $when);
-	unless (ref($code) eq 'CODE') {
-	    Carp::croak('add_trigger() needs coderef');
-	}
+	Carp::croak('add_trigger() needs coderef') unless ref($code) eq 'CODE';
 	push @{$triggers{$when}}, $code;
     }
     __update_triggers($proto, \%triggers);
 }
 
 sub call_trigger {
-    my($self, $when, @args) = @_;
-    __validate_triggerpoint(ref($self) || $self, $when);
-    my $all_triggers = __fetch_triggers($self);
-    my $triggers = $all_triggers->{$when} || [];
-    for my $trigger (@{$triggers}) {
-	$trigger->($self, @args);
+    my $self = shift;
+    my $all_triggers = __fetch_triggers($self) || return; # any triggers?
+    my $when = shift;
+    if (my $triggers = $all_triggers->{$when}) {
+	for my $trigger (@$triggers) {
+	    $trigger->($self, @_);
+	}
+    }
+    else {
+	# if validation is enabled we can only add valid trigger points
+	# so we only need to check in call_trigger() if there's no
+	# trigger with the requested name.
+	__validate_triggerpoint($self, $when);
     }
 }
 
 sub __validate_triggerpoint {
-    my($class, $when) = @_;
-    my $points = $class->__triggerpoints;
-    if ($points && ! defined $points->{$when}) {
-	Carp::croak("$when is not valid triggerpoint for $class");
-    }
+    my $points = $_[0]->__triggerpoints || return;
+    my ($self, $when) = @_;
+    Carp::croak("$when is not valid triggerpoint for ".(ref($self) || $self))
+	unless $points->{$when};
 }
 
 sub __fetch_triggers {
     my $proto = shift;
-    if (ref $proto) {
-	# first check object based triggers
-	return $proto->{__triggers} if defined $proto->{__triggers};
-    }
-    return $proto->__triggers || {};
+    # check object based triggers first
+    return (ref $proto and $proto->{__triggers}) || $proto->__triggers;
 }
 
 sub __update_triggers {
@@ -146,12 +148,12 @@ By using this module, your class is capable of following two methods.
   $foo->add_trigger($triggerpoint => $sub);
 
 Adds triggers for trigger point. You can have any number of triggers
-for each point. Each coderef will be passed a copy of the object, and
+for each point. Each coderef will be passed a the object reference, and
 return values will be ignored.
 
-If C<add_trigger> is called as object method, whole trigger table will
-be copied onto the object. Then the object should be implemented as
-hash.
+If C<add_trigger> is called as object method, whole current trigger
+table will be copied onto the object and the new trigger added to
+that. (The object must be implemented as hash.)
 
   my $foo = Foo->new;
 
@@ -163,12 +165,18 @@ hash.
   my $bar = Foo->new;
   $bar->foo;
 
+Any triggers added to the class after adding a trigger to an object
+will not be fired for the object because the object now has a private
+copy of the triggers.
+
+
 =item call_trigger
 
   $foo->call_trigger($triggerpoint);
 
 Calls triggers for trigger point, which were added via C<add_trigger>
 method. Each triggers will be passed a copy of the object.
+Triggers are invoked in the same order they were defined.
 
 =back
 
@@ -256,6 +264,8 @@ in action.
 Original idea by Tony Bowden E<lt>tony@kasei.comE<gt> in Class::DBI.
 
 Code by Tatsuhiko Miyagawa E<lt>miyagawa@bulknews.netE<gt>.
+
+Patches by Tim Buce E<lt>Tim.Bunce@pobox.comE<gt>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
