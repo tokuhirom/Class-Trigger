@@ -14,7 +14,6 @@ ok(Foo->add_trigger(before_foo => sub { print "before_foo\n" }),
     tie *STDOUT, 'IO::Scalar', \my $out;
     $foo->add_trigger(after_foo => sub { print "after_foo\n" });
     $foo->foo;
-    untie *STDOUT;
     is $out, "before_foo\nfoo\nafter_foo\n";
 }
 
@@ -32,7 +31,6 @@ ok(Foo->add_trigger(before_foo => sub { print "before_foo\n" }),
     $foo->add_trigger(after_foo => sub { print "after_foo1\n" });
     $foo->add_trigger(after_foo => sub { print "after_foo2\n" });
     $foo->foo;
-    untie *STDOUT;
     is $out, "before_foo\nfoo\nafter_foo1\nafter_foo2\n";
 }
 
@@ -40,7 +38,6 @@ ok(Foo->add_trigger(before_foo => sub { print "before_foo\n" }),
     my $foo = Foo->new;
     tie *STDOUT, 'IO::Scalar', \my $out;
     $foo->foo;
-    untie *STDOUT;
     is $out, "before_foo\nfoo\n";
 }
 

@@ -19,7 +19,6 @@ my $foo = Foo::Bar->new;
 {
     tie *STDOUT, 'IO::Scalar', \my $out;
     $foo->foo;
-    untie *STDOUT;
     is $out, "before_foo\nbefore_foo2\nfoo\nafter_foo\n";
 }
 
@@ -27,7 +26,6 @@ my $foo_parent = Foo->new;
 {
     tie *STDOUT, 'IO::Scalar', \my $out;
     $foo_parent->foo;
-    untie *STDOUT;
     is $out, "before_foo\nfoo\n", 'Foo not affected';
 }
 

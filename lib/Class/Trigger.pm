@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.04';
+$VERSION = 0.05;
 
 use Class::Data::Inheritable;
 use Carp ();
@@ -24,8 +24,8 @@ sub import {
 
     # export mixin methods
     no strict 'refs';
-    *{"$pkg\::add_trigger"}  = \&add_trigger;
-    *{"$pkg\::call_trigger"} = \&call_trigger;
+    my @methods = qw(add_trigger call_trigger);
+    *{"$pkg\::$_"} = \&{$_} for @methods;
 }
 
 sub add_trigger {
@@ -104,7 +104,9 @@ Class::Trigger - Mixin to add / call inheritable triggers
   sub foo {
       my $self = shift;
       $self->call_trigger('before_foo');
-      $self->do_foo;
+      # some code ...
+      $self->call_trigger('middle_of_foo');
+      # some code ...
       $self->call_trigger('after_foo');
   }
 
