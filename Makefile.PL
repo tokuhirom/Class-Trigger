@@ -6,5 +6,6 @@ WriteMakefile(
 	Test::More => 0.32,
 	Class::Data::Inheritable => 0.02,
 	IO::Scalar => 0,
+        Class::ISA => 0,
     },
 );

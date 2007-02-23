@@ -2,25 +2,17 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = "0.10";
+$VERSION = "0.10_01";
 
-use Class::Data::Inheritable;
 use Carp ();
+
+my (%Triggers, %TriggerPoints);
 
 sub import {
     my $class = shift;
     my $pkg = caller(0);
 
-    # XXX 5.005_03 isa() is broken with MI
-    unless ($pkg->can('mk_classdata')) {
-	no strict 'refs';
-	push @{"$pkg\::ISA"}, 'Class::Data::Inheritable';
-    }
-
-    $pkg->mk_classdata('__triggers');
-    $pkg->mk_classdata('__triggerpoints');
-
-    $pkg->__triggerpoints({ map { $_ => 1 } @_ }) if @_;
+    $TriggerPoints{$pkg} = { map { $_ => 1 } @_ } if @_;
 
     # export mixin methods
     no strict 'refs';
@@ -31,66 +23,84 @@ sub import {
 sub add_trigger {
     my $proto = shift;
 
-    # should be deep copy of the hash: for inheritance
-    my $old_triggers = __fetch_triggers($proto) || {};
-    my %triggers = __deep_dereference($old_triggers);
+    my $triggers = __fetch_triggers($proto);
     while (my($when, $code) = splice @_, 0, 2) {
-	__validate_triggerpoint($proto, $when);
-	Carp::croak('add_trigger() needs coderef') unless ref($code) eq 'CODE';
-	push @{$triggers{$when}}, $code;
+        __validate_triggerpoint($proto, $when);
+        Carp::croak('add_trigger() needs coderef') unless ref($code) eq 'CODE';
+        push @{$triggers->{$when}}, $code;
     }
-    __update_triggers($proto, \%triggers);
+
+    1;
 }
 
 sub call_trigger {
     my $self = shift;
-    return unless my $all_triggers = __fetch_triggers($self); # any triggers?
     my $when = shift;
-    if (my $triggers = $all_triggers->{$when}) {
-	for my $trigger (@$triggers) {
-	    $trigger->($self, @_);
-	}
+
+    if (my @triggers = __fetch_all_triggers($self, $when)) { # any triggers?
+        $_->($self, @_) for @triggers;
     }
     else {
-	# if validation is enabled we can only add valid trigger points
-	# so we only need to check in call_trigger() if there's no
-	# trigger with the requested name.
-	__validate_triggerpoint($self, $when);
+        # if validation is enabled we can only add valid trigger points
+        # so we only need to check in call_trigger() if there's no
+        # trigger with the requested name.
+        __validate_triggerpoint($self, $when);
+    }
+}
+
+sub __fetch_all_triggers {
+    my ($obj, $when, $list, $order) = @_;
+    my $class = ref $obj || $obj;
+    my $return;
+    unless ($list) {
+        # Absence of the $list parameter conditions the creation of
+        # the unrolled list of triggers. These keep track of the unique
+        # set of triggers being collected for each class and the order
+        # in which to return them (based on hierarchy; base class
+        # triggers are returned ahead of descendant class triggers).
+        $list = {};
+        $order = [];
+        $return = 1;
+    }
+    no strict 'refs';
+    my @classes = @{$class . '::ISA'};
+    push @classes, $class;
+    foreach my $c (@classes) {
+        next if $list->{$c};
+        if (UNIVERSAL::can($c, 'call_trigger')) {
+            $list->{$c} = [];
+            __fetch_all_triggers($c, $when, $list, $order)
+                unless $c eq $class;
+            if (defined $when && $Triggers{$c}{$when}) {
+                push @$order, $c;
+                $list->{$c} = $Triggers{$c}{$when};
+            }
+        }
+    }
+    if ($return) {
+        my @triggers;
+        foreach my $class (@$order) {
+            push @triggers, @{ $list->{$class} };
+        }
+        if (ref $obj && defined $when) {
+            my $obj_triggers = $obj->{__triggers}{$when};
+            push @triggers, @$obj_triggers if $obj_triggers;
+        }
+        return @triggers;
     }
 }
 
 sub __validate_triggerpoint {
-    return unless my $points = $_[0]->__triggerpoints;
+    return unless my $points = $TriggerPoints{ref $_[0] || $_[0]};
     my ($self, $when) = @_;
     Carp::croak("$when is not valid triggerpoint for ".(ref($self) ? ref($self) : $self))
-	unless $points->{$when};
+        unless $points->{$when};
 }
 
 sub __fetch_triggers {
-    my $proto = shift;
+    my ($obj, $proto) = @_;
     # check object based triggers first
-    return (ref $proto and $proto->{__triggers}) || $proto->__triggers;
-}
-
-sub __update_triggers {
-    my($proto, $triggers) = @_;
-    if (ref $proto) {
-	# object attributes
-	$proto->{__triggers} = $triggers;
-    }
-    else {
-	# class data inheritable
-	$proto->__triggers($triggers);
-    }
-}
-
-sub __deep_dereference {
-    my $hashref = shift;
-    my %copy;
-    while (my($key, $arrayref) = each %$hashref) {
-	$copy{$key} = [ @$arrayref ];
-    }
-    return %copy;
+    return ref $obj ? $obj->{__triggers} ||= {} : $Triggers{$obj} ||= {};
 }
 
 1;
@@ -119,7 +129,7 @@ Class::Trigger - Mixin to add / call inheritable triggers
   Foo->add_trigger(after_foo => \&sub2);
 
   my $foo = Foo->new;
-  $foo->foo;			# then sub1, sub2 called
+  $foo->foo;            # then sub1, sub2 called
 
   # triggers are inheritable
   package Bar;
@@ -129,7 +139,7 @@ Class::Trigger - Mixin to add / call inheritable triggers
 
   # triggers can be object based
   $foo->add_trigger(after_foo => \&sub3);
-  $foo->foo;			# sub3 would appply only to this object
+  $foo->foo;            # sub3 would appply only to this object
 
 =head1 DESCRIPTION
 
