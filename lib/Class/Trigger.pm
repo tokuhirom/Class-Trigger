@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = "0.10_01";
+$VERSION = "0.11";
 
 use Carp ();
 
@@ -175,11 +175,6 @@ that. (The object must be implemented as hash.)
   my $bar = Foo->new;
   $bar->foo;
 
-Any triggers added to the class after adding a trigger to an object
-will not be fired for the object because the object now has a private
-copy of the triggers.
-
-
 =item call_trigger
 
   $foo->call_trigger($triggerpoint, @args);
@@ -281,7 +276,7 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Class::Data::Inheritable>
+L<Class::DBI>
 
 =cut
 
