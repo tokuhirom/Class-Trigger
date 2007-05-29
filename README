@@ -8,7 +8,9 @@ SYNOPSIS
       sub foo {
           my $self = shift;
           $self->call_trigger('before_foo');
-          $self->do_foo;
+          # some code ...
+          $self->call_trigger('middle_of_foo');
+          # some code ...
           $self->call_trigger('after_foo');
       }
 
@@ -17,7 +19,7 @@ SYNOPSIS
       Foo->add_trigger(after_foo => \&sub2);
 
       my $foo = Foo->new;
-      $foo->foo;                    # then sub1, sub2 called
+      $foo->foo;            # then sub1, sub2 called
 
       # triggers are inheritable
       package Bar;
@@ -26,8 +28,8 @@ SYNOPSIS
       Bar->add_trigger(before_foo => \&sub);
 
       # triggers can be object based
-      $foo->add_hook(after_foo => \&sub3);
-      $foo->foo;                    # sub3 would appply only to this object
+      $foo->add_trigger(after_foo => \&sub3);
+      $foo->foo;            # sub3 would appply only to this object
 
 DESCRIPTION
     Class::Trigger is a mixin class to add / call triggers (or hooks) that
@@ -40,13 +42,28 @@ METHODS
           Foo->add_trigger($triggerpoint => $sub);
           $foo->add_trigger($triggerpoint => $sub);
 
-        Adds triggers for trigger point. You can have any number of triggers
-        for each point. Each coderef will be passed a copy of the object,
-        and return values will be ignored.
+          Foo->add_trigger( name => $triggerpoint,
+                            callback => sub {return undef},
+                            abortable => 1); 
 
-        If "add_trigger" is called as object method, whole trigger table
-        will be copied onto the object. Then the object should be
-        implemented as hash.
+          # no further triggers will be called. Undef will be returned.
+
+        Adds triggers for trigger point. You can have any number of triggers
+        for each point. Each coderef will be passed a reference to the
+        calling object, as well as arguments passed in via run_trigger.
+
+        If add_trigger is called with named_parameters and the "abortable"
+        parameter is passed a true value, a false return values will stop
+        processing of this trigger point. If the trigger is "abortable"
+        return the return value from the last callback processed will be
+        returned to calling code.
+
+        If "add_trigger" is called without the "abortable" flag, return
+        values will be ignored.
+
+        If "add_trigger" is called as object method, whole current trigger
+        table will be copied onto the object and the new trigger added to
+        that. (The object must be implemented as hash.)
 
           my $foo = Foo->new;
 
@@ -59,10 +76,13 @@ METHODS
           $bar->foo;
 
     call_trigger
-          $foo->call_trigger($triggerpoint);
+          $foo->call_trigger($triggerpoint, @args);
 
         Calls triggers for trigger point, which were added via "add_trigger"
-        method. Each triggers will be passed a copy of the object.
+        method. Each triggers will be passed a copy of the object as the
+        first argument. Remaining arguments passed to "call_trigger" will be
+        passed on to each trigger. Triggers are invoked in the same order
+        they were defined.
 
 TRIGGER POINTS
     By default you can make any number of trigger points, but if you want to
@@ -117,8 +137,8 @@ FAQ
         simple matter of setting up triggers on INSERT and UPDATE to reindex
         that row, and on DELETE to remove that index row.
 
-        See the Class::DBI::mysql::FullTextSearch manpage and its source
-        code to see it in action.
+        See Class::DBI::mysql::FullTextSearch and its source code to see it
+        in action.
 
 AUTHOR
     Original idea by Tony Bowden <tony@kasei.com> in Class::DBI.
@@ -129,5 +149,5 @@ AUTHOR
     under the same terms as Perl itself.
 
 SEE ALSO
-    the Class::Data::Inheritable manpage
+    Class::DBI
 

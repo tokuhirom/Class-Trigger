@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = "0.11";
+$VERSION = "0.11_01";
 
 use Carp ();
 
@@ -16,7 +16,7 @@ sub import {
 
     # export mixin methods
     no strict 'refs';
-    my @methods = qw(add_trigger call_trigger);
+    my @methods = qw(add_trigger call_trigger last_trigger_results);
     *{"$pkg\::$_"} = \&{$_} for @methods;
 }
 
@@ -24,21 +24,56 @@ sub add_trigger {
     my $proto = shift;
 
     my $triggers = __fetch_triggers($proto);
+
+    if (ref($_[1]) eq 'CODE') { 
+
     while (my($when, $code) = splice @_, 0, 2) {
         __validate_triggerpoint($proto, $when);
         Carp::croak('add_trigger() needs coderef') unless ref($code) eq 'CODE';
-        push @{$triggers->{$when}}, $code;
+        push @{$triggers->{$when}}, [$code, undef];
     }
+    }
+    elsif (grep {'name'} @_) {
+        my %args = ( name => undef, callback => undef, abortable => undef, @_);
+        my $when= $args{'name'};
+        my $code = $args{'callback'};
+        my $abortable = $args{'abortable'};
+        __validate_triggerpoint($proto, $when);
+        Carp::croak('add_trigger() needs coderef') unless ref($code) eq 'CODE';
+        push @{$triggers->{$when}}, [$code, $abortable];
 
+
+    } else {
+        Carp::croak('add_trigger() needs coderef');
+
+    }
     1;
+}
+
+
+sub last_trigger_results {
+    my $self = shift;
+    my $result_store = ref($self) ? $self : ${Class::Trigger::_trigger_results}->{$self};
+    return $result_store->{'_class_trigger_results'};
 }
 
 sub call_trigger {
     my $self = shift;
     my $when = shift;
 
+    my @return;
+
+    my $result_store = ref($self) ? $self : ${Class::Trigger::_trigger_results}->{$self};
+
+    $result_store->{'_class_trigger_results'} = [];
+
     if (my @triggers = __fetch_all_triggers($self, $when)) { # any triggers?
-        $_->($self, @_) for @triggers;
+        for my $trigger (@triggers) {
+              my @return = $trigger->[0]->($self, @_);
+                push @{$result_store->{'_class_trigger_results'}}, \@return;
+                return undef if ($trigger->[1] and not $return[0]); # only abort on false values.
+         
+    }
     }
     else {
         # if validation is enabled we can only add valid trigger points
@@ -46,6 +81,8 @@ sub call_trigger {
         # trigger with the requested name.
         __validate_triggerpoint($self, $when);
     }
+
+    return scalar @{$result_store->{'_class_trigger_results'}};
 }
 
 sub __fetch_all_triggers {
@@ -148,7 +185,7 @@ that get called at some points you specify.
 
 =head1 METHODS
 
-By using this module, your class is capable of following two methods.
+By using this module, your class is capable of following methods.
 
 =over 4
 
@@ -157,9 +194,26 @@ By using this module, your class is capable of following two methods.
   Foo->add_trigger($triggerpoint => $sub);
   $foo->add_trigger($triggerpoint => $sub);
 
+
+  Foo->add_trigger( name => $triggerpoint,
+                    callback => sub {return undef},
+                    abortable => 1); 
+
+  # no further triggers will be called. Undef will be returned.
+
+
 Adds triggers for trigger point. You can have any number of triggers
-for each point. Each coderef will be passed a the object reference, and
-return values will be ignored.
+for each point. Each coderef will be passed a reference to the calling object, 
+as well as arguments passed in via L<call_trigger>. Return values will be
+captured in I<list context>.
+
+If add_trigger is called with named parameters and the C<abortable>
+parameter is passed a true value, a false return value from trigger
+code will stop processing of this trigger point and return a C<false>
+value to the calling code.
+
+If C<add_trigger> is called without the C<abortable> flag, return
+values will be captured by call_trigger, but failures will be ignored.
 
 If C<add_trigger> is called as object method, whole current trigger
 table will be copied onto the object and the new trigger added to
@@ -183,6 +237,22 @@ Calls triggers for trigger point, which were added via C<add_trigger>
 method. Each triggers will be passed a copy of the object as the first argument.
 Remaining arguments passed to C<call_trigger> will be passed on to each trigger.
 Triggers are invoked in the same order they were defined.
+
+If there are no C<abortable> triggers or no C<abortable> trigger point returns 
+a false value, C<call_trigger> will return the number of triggers processed.
+
+
+If an C<abortable> trigger returns a false value, call trigger will stop execution
+of the trigger point and return undef.
+
+=item last_trigger_results
+
+    my @results = @{ $foo->last_trigger_results };
+
+Returns a reference to an array of the return values of all triggers called
+for the last trigger point. Results are ordered in the same order the triggers
+were run.
+
 
 =back
 
