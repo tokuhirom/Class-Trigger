@@ -13,8 +13,8 @@ ok( Foo->add_trigger(
     'add_trigger in Foo'
 );
 ok( Foo->add_trigger(
-        name     => 'after_foo',
-        callback => sub { print "after_foo\n" }
+        callback => sub { print "after_foo\n" },
+        name     => 'after_foo', # change the param order to test from hash -> list
     ),
     'add_trigger in foo'
 );

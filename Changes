@@ -1,5 +1,12 @@
 Revision history for Perl extension Class::Trigger.
 
+0.11_02  Sun Jun 10 18:09:58 PDT 2007
+    - Added a test to make sure $_ is not clobbered
+      (Thanks to mark addison)
+    - Killed the hidden feature to add multiple hooks in one
+      add_trigger() call because it interfers with named parameter style
+      calls. (Thanks to clkao)
+
 0.11_01  Mon May 28 21:03:03 PDT 2007
 
     - Added support for abortable triggers.
