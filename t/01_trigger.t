@@ -53,3 +53,16 @@ ok(Foo->add_trigger(after_foo  => sub { print ref $_[0] }),
 
     like(pop(@die), qr(add_trigger[(][)] needs coderef at ), 'check for right callback param');
 }
+{
+    # pass a multiple triggers and catch the carp
+
+    my @die;
+
+    eval {
+       local $SIG{__DIE__} = sub {push @die, @_};
+
+       Foo->add_trigger(hello => sub{}, world => sub{});
+    };
+
+    like(pop(@die), qr(mutiple trigger registration in one add_trigger[(][)] call is deprecated.), 'check for depricated multi-trigger add');
+}

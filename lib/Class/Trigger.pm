@@ -2,7 +2,7 @@ package Class::Trigger;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = "0.11_02";
+$VERSION = "0.11_03";
 
 use Carp ();
 
@@ -27,7 +27,7 @@ sub add_trigger {
 
     my %params = @_;
     my @values = values %params;
-    if (@_ > 2 && grep { ref && ref eq 'CODE' } @values == @values) {
+    if (@_ > 2 && (grep { ref && ref eq 'CODE' } @values) == @values) {
         Carp::croak "mutiple trigger registration in one add_trigger() call is deprecated.";
     }
 

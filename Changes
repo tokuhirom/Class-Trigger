@@ -1,5 +1,9 @@
 Revision history for Perl extension Class::Trigger.
 
+0.11_03  Wed Jun 20 12:12:36 PDT 2007
+    - Fixed a bug in backward-compatiblity code to handle multiple
+      hooks in one add_trigger() call. (Thanks to mark addison)
+
 0.11_02  Sun Jun 10 18:09:58 PDT 2007
     - Added a test to make sure $_ is not clobbered
       (Thanks to mark addison)
