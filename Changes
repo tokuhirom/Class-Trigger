@@ -1,5 +1,9 @@
 Revision history for Perl extension Class::Trigger.
 
+0.13 Thu Mar  6 12:55:09 PST 2008
+        - Added a cache to fetch_triggers code so as it won't suck down CPU at runtime.
+          RT:30279. Thanks to Alex Vandiver and Michael Schwern
+
 0.12 Mon Aug 20 16:06:50 PDT 2007
     - Make this a release
 
