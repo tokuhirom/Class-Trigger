@@ -1,8 +1,8 @@
 package Class::Trigger;
-
+use 5.008_001;
 use strict;
 use vars qw($VERSION);
-$VERSION = "0.13";
+$VERSION = "0.14";
 
 use Carp ();
 
@@ -87,13 +87,16 @@ sub call_trigger {
 }
 
 sub __fetch_all_triggers {
-    my ($obj, $when, $list, $order) = @_;
+    my ($obj, $when, $list, $order, $nocache) = @_;
+    $nocache = 0 unless defined $nocache;
     my $class = ref $obj || $obj;
     my $return;
     my $when_key = defined $when ? $when : '';
     
-    return __cached_triggers($obj, $when)
-        if $Fetch_All_Triggers_Cache{$class}{$when_key};
+    unless ($nocache) {
+        return __cached_triggers($obj, $when)
+            if $Fetch_All_Triggers_Cache{$class}{$when_key};
+    }
     
     unless ($list) {
         # Absence of the $list parameter conditions the creation of
@@ -110,9 +113,10 @@ sub __fetch_all_triggers {
     push @classes, $class;
     foreach my $c (@classes) {
         next if $list->{$c};
-        if (UNIVERSAL::can($c, 'call_trigger')) {
+#        if (UNIVERSAL::can($c, 'call_trigger')) {
+        if ($c->can('call_trigger')) {
             $list->{$c} = [];
-            __fetch_all_triggers($c, $when, $list, $order)
+            __fetch_all_triggers($c, $when, $list, $order, 1)
                 unless $c eq $class;
             if (defined $when && $Triggers{$c}{$when}) {
                 push @$order, $c;
@@ -369,6 +373,8 @@ Code by Tatsuhiko Miyagawa E<lt>miyagawa@bulknews.netE<gt>.
 
 Jesse Vincent added a code to get return values from triggers and
 abortable flag.
+
+=head1 LICENSE
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

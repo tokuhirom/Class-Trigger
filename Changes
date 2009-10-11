@@ -1,5 +1,12 @@
 Revision history for Perl extension Class::Trigger.
 
+0.14 Sun Oct 11 15:55:14 PDT 2009
+        - Make this a non-dev release
+
+0.13_01 Wed Oct  7 21:50:42 PDT 2009
+        - Disable the cache on the recursive fetch triggers to fix bugs in inheritance
+          https://rt.cpan.org/Public/Bug/Display.html?id=37299 (Michael Schout)
+
 0.13 Thu Mar  6 12:55:09 PST 2008
         - Added a cache to fetch_triggers code so as it won't suck down CPU at runtime.
           RT:30279. Thanks to Alex Vandiver and Michael Schwern
