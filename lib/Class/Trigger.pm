@@ -9,6 +9,7 @@ use MRO::Compat;
 
 my (%Triggers, %TriggerPoints);
 my %Fetch_All_Triggers_Cache;
+my %TriggerValidationCache;
 
 sub import {
     my $class = shift;
@@ -161,11 +162,15 @@ sub __object_triggers {
 sub __validate_triggerpoint {
     my $proto = ref $_[0] || $_[0];
     my $when  = $_[1];
+    return if $TriggerValidationCache{"$proto\0".($when||'')};
 
     my $has_points;
     for my $pkg (@{mro::get_linear_isa($proto)}) {
         if (my $points = $TriggerPoints{$pkg}) {
-            return if $points->{$when};
+            if ($points->{$when}) {
+                $TriggerValidationCache{"$proto\0".($when||'')}++;
+                return;
+            }
             $has_points++;
         }
     }
