@@ -5,6 +5,7 @@ use vars qw($VERSION);
 $VERSION = "0.14";
 
 use Carp ();
+use MRO::Compat;
 
 my (%Triggers, %TriggerPoints);
 my %Fetch_All_Triggers_Cache;
@@ -158,10 +159,19 @@ sub __object_triggers {
 
 
 sub __validate_triggerpoint {
-    return unless my $points = $TriggerPoints{ref $_[0] || $_[0]};
-    my ($self, $when) = @_;
-    Carp::croak("$when is not valid triggerpoint for ".(ref($self) ? ref($self) : $self))
-        unless $points->{$when};
+    my $proto = ref $_[0] || $_[0];
+    my $when  = $_[1];
+
+    my $has_points;
+    for my $pkg (@{mro::get_linear_isa($proto)}) {
+        if (my $points = $TriggerPoints{$pkg}) {
+            return if $points->{$when};
+            $has_points++;
+        }
+    }
+    if ($has_points) {
+        Carp::croak("$when is not valid triggerpoint for $proto");
+    }
 }
 
 sub __fetch_triggers {

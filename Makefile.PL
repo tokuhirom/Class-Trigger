@@ -2,6 +2,8 @@ use inc::Module::Install;
 name 'Class-Trigger';
 all_from 'lib/Class/Trigger.pm';
 
+requires 'MRO::Compat';
+
 tests 't/*.t t/*/*.t t/*/*/*.t t/*/*/*/*.t';
 test_requires 'Test::More' => 0.32;
 test_requires 'IO::Scalar';
